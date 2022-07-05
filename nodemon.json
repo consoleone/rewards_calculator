@@ -1,0 +1,13 @@
+{
+    "watch": [
+        "src"
+    ],
+    "ext": "js,json",
+    "ignore": [
+        "node_modules"
+    ],
+    "restartable": "rs",
+    "env": {
+        "NODE_ENV": "development"
+    }
+}

@@ -1,0 +1,5 @@
+{
+  "javascript.suggest.autoImports": false,
+  "js/ts.implicitProjectConfig.module": "CommonJS",
+  "eslint.validate": []
+}
