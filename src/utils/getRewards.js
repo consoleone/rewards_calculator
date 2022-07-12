@@ -1,35 +1,53 @@
-const axios = require("axios");
-const { getDb, client } = require("../db/mongo");
-const { Parser } = require("json2csv");
-const { BlobServiceClient } = require("@azure/storage-blob");
+require('dotenv').config();
+const axios = require('axios');
+const { getDb, client } = require('../db/mongo');
+const { Parser } = require('json2csv');
+const { BlobServiceClient } = require('@azure/storage-blob');
 
 const blobServiceClient = BlobServiceClient.fromConnectionString(
   process.env.BLOB_URI
 );
 
+const queryDate = (epoch) => {
+  return axios
+    .post('https://gateway.caviarnine.com/validator', {
+      network_identifier: {
+        network: 'mainnet',
+      },
+      validator_identifier: {
+        address:
+          'rv1qvjz86qwa7l80y8vhfuhz6957ch6texdmpk98rg2gtakhr0avan4jplkxy7',
+      },
+      at_state_identifier: {
+        epoch,
+      },
+    })
+    .then(({ data }) => data.ledger_state.timestamp.split('T')[0]);
+};
+
 const fields = [
-  "rewardDate",
-  "validator",
-  "tokenIdentifier",
-  "epoch",
-  "time",
-  "amount",
-  "usd",
-  "gbp",
-  "eur",
-  "jpy",
-  "cny",
-  "inr",
-  "aud",
-  "krw",
+  'rewardDate',
+  'validator',
+  'tokenIdentifier',
+  'epoch',
+  'time',
+  'amount',
+  'usd',
+  'gbp',
+  'eur',
+  'jpy',
+  'cny',
+  'inr',
+  'aud',
+  'krw',
 ];
 
 async function getStakes(address, epoch) {
   const result = await axios.post(
-    "https://gateway.caviarnine.com/account/stakes",
+    'https://gateway.caviarnine.com/account/stakes',
     {
       network_identifier: {
-        network: "mainnet",
+        network: 'mainnet',
       },
       account_identifier: {
         address,
@@ -43,15 +61,15 @@ async function getStakes(address, epoch) {
 }
 
 async function transactions(address) {
-  let nextCursor = "0";
+  let nextCursor = '0';
 
   const stakeTransaction = [];
   do {
     const result = await axios.post(
-      "https://gateway.caviarnine.com/account/transactions",
+      'https://gateway.caviarnine.com/account/transactions',
       {
         network_identifier: {
-          network: "mainnet",
+          network: 'mainnet',
         },
         account_identifier: {
           address,
@@ -62,7 +80,7 @@ async function transactions(address) {
 
     nextCursor = result.data.next_cursor;
     for (const transaction of result.data.transactions) {
-      if (transaction.actions[0].type === "StakeTokens") {
+      if (transaction.actions[0].type === 'StakeTokens') {
         stakeTransaction.push(transaction);
       }
     }
@@ -78,7 +96,7 @@ async function calculateRewards(address, start, end) {
   let startStake;
   let endStake;
   const db = await getDb();
-  const pricesCollection = db.collection("dailyPrices");
+  const pricesCollection = db.collection('dailyPrices');
 
   while (currentEpoch <= end) {
     if (!startStake) {
@@ -89,18 +107,18 @@ async function calculateRewards(address, start, end) {
     endStake = await getStakes(address, ++currentEpoch);
     const rewardDate = new Date(startStake.ledger_state.timestamp)
       .toISOString()
-      .split("T")[0];
+      .split('T')[0];
     const prices = await pricesCollection
-      .findOne({ symbol: "xrd", date: rewardDate })
+      .findOne({ symbol: 'xrd', date: rewardDate })
       .then((value) => value.prices);
 
     for (const stake of startStake.stakes) {
       let reward = 0;
       for (const stake_end of endStake.stakes) {
         if (
-          stake.delegated_stake.token_identifier.rri === "xrd_rr1qy5wfsfh" &&
+          stake.delegated_stake.token_identifier.rri === 'xrd_rr1qy5wfsfh' &&
           stake_end.delegated_stake.token_identifier.rri ===
-            "xrd_rr1qy5wfsfh" &&
+            'xrd_rr1qy5wfsfh' &&
           stake_end.validator_identifier.address ===
             stake.validator_identifier.address
         ) {
@@ -157,73 +175,68 @@ async function calculateRewards(address, start, end) {
   return [rewards, data];
 }
 
-async function getEpoch(date, isStartEpoch, isEndEpoch) {
+async function getStartEpoch(date) {
   let startEpoch = 1;
   let endEpoch = await axios
-    .post("https://gateway.caviarnine.com/validator", {
+    .post('https://gateway.caviarnine.com/validator', {
       network_identifier: {
-        network: "mainnet",
+        network: 'mainnet',
       },
       validator_identifier: {
         address:
-          "rv1qvjz86qwa7l80y8vhfuhz6957ch6texdmpk98rg2gtakhr0avan4jplkxy7",
+          'rv1qvjz86qwa7l80y8vhfuhz6957ch6texdmpk98rg2gtakhr0avan4jplkxy7',
       },
     })
     .then(({ data }) => data.ledger_state.epoch);
-  while (startEpoch <= endEpoch) {
-    const midEpoch = parseInt((startEpoch + endEpoch) / 2);
-    const midDate = await axios
-      .post("https://gateway.caviarnine.com/validator", {
-        network_identifier: {
-          network: "mainnet",
-        },
-        validator_identifier: {
-          address:
-            "rv1qvjz86qwa7l80y8vhfuhz6957ch6texdmpk98rg2gtakhr0avan4jplkxy7",
-        },
-        at_state_identifier: {
-          epoch: midEpoch,
-        },
-      })
-      .then(({ data }) => data.ledger_state.timestamp.split("T")[0]);
 
-    let preMidEpoch;
-    if (isStartEpoch) {
-      preMidEpoch = midEpoch - 1;
-    } else {
-      preMidEpoch = midEpoch + 1;
-    }
-    const preMidDate = await axios
-      .post("https://gateway.caviarnine.com/validator", {
-        network_identifier: {
-          network: "mainnet",
-        },
-        validator_identifier: {
-          address:
-            "rv1qvjz86qwa7l80y8vhfuhz6957ch6texdmpk98rg2gtakhr0avan4jplkxy7",
-        },
-        at_state_identifier: {
-          epoch: preMidEpoch,
-        },
-      })
-      .then(({ data }) => data.ledger_state.timestamp.split("T")[0]);
+  while (startEpoch <= endEpoch) {
+    const midEpoch = Math.floor((startEpoch + endEpoch) / 2);
+    const midDate = await queryDate(midEpoch);
 
     if (new Date(date).getTime() > new Date(midDate).getTime()) {
       startEpoch = midEpoch + 1;
     } else if (new Date(date).getTime() < new Date(midDate).getTime()) {
       endEpoch = midEpoch - 1;
-    } else if (
-      new Date(date).getTime() === new Date(preMidDate).getTime() &&
-      isStartEpoch
-    ) {
-      endEpoch = preMidEpoch;
-    } else if (
-      new Date(date).getTime() === new Date(preMidDate).getTime() &&
-      isEndEpoch
-    ) {
-      startEpoch = preMidEpoch;
-    } else {
-      return midEpoch;
+    } else if (new Date(date).getTime() === new Date(midDate).getTime()) {
+      const prevDate = await queryDate(midEpoch - 1);
+      if (new Date(prevDate).getTime() === new Date(midDate).getTime()) {
+        endEpoch = midEpoch - 1;
+      } else {
+        return midEpoch;
+      }
+    }
+  }
+}
+
+async function getEndEpoch(date) {
+  let startEpoch = 1;
+  let endEpoch = await axios
+    .post('https://gateway.caviarnine.com/validator', {
+      network_identifier: {
+        network: 'mainnet',
+      },
+      validator_identifier: {
+        address:
+          'rv1qvjz86qwa7l80y8vhfuhz6957ch6texdmpk98rg2gtakhr0avan4jplkxy7',
+      },
+    })
+    .then(({ data }) => data.ledger_state.epoch);
+
+  while (startEpoch <= endEpoch) {
+    const midEpoch = Math.floor((startEpoch + endEpoch) / 2);
+    const midDate = await queryDate(midEpoch);
+
+    if (new Date(date).getTime() > new Date(midDate).getTime()) {
+      startEpoch = midEpoch + 1;
+    } else if (new Date(date).getTime() < new Date(midDate).getTime()) {
+      endEpoch = midEpoch - 1;
+    } else if (new Date(date).getTime() === new Date(midDate).getTime()) {
+      const nextDate = await queryDate(midEpoch + 1);
+      if (new Date(nextDate).getTime() === new Date(midDate).getTime()) {
+        startEpoch = midEpoch + 1;
+      } else {
+        return midEpoch;
+      }
     }
   }
 }
@@ -231,14 +244,14 @@ async function getEpoch(date, isStartEpoch, isEndEpoch) {
 async function start(address, startDate, endDate) {
   const [rewards, data] = await calculateRewards(
     address,
-    await getEpoch(startDate, true, false),
-    await getEpoch(endDate, false, true)
+    await getStartEpoch(startDate),
+    await getEndEpoch(endDate)
   );
   const parser = new Parser(fields);
   const csv = parser.parse(data);
-  const containerName = "reward-reports";
+  const containerName = 'reward-reports';
   const containerClient = blobServiceClient.getContainerClient(containerName);
-  const blobName = `${address}-` + new Date().getTime() + ".csv";
+  const blobName = `${address}-` + new Date().getTime() + '.csv';
   const blockBlobClient = containerClient.getBlockBlobClient(blobName);
   await blockBlobClient.upload(csv, csv.length);
 }
