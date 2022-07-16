@@ -1,5 +1,4 @@
 if (process.env.NODE_ENV === 'development') require('dotenv').config();
-require('dotenv').config();
 const axios = require('axios');
 const { getDb, client } = require('../db/mongo');
 const { Parser } = require('json2csv');
