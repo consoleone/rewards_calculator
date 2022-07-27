@@ -8,8 +8,6 @@ const app = express();
 app.use(
   cors({
     origin: '*',
-    preflightContinue: true,
-    optionsSuccessStatus: 204,
   })
 );
 
