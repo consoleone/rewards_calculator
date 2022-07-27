@@ -211,6 +211,7 @@ async function getStartEpoch(date) {
 
 async function getEndEpoch(date) {
   if (new Date(date).getTime() < new Date('2021-08-11').getTime()) return 3;
+
   let startEpoch = 1;
   let endEpoch = await axios
     .post('https://gateway.caviarnine.com/validator', {
@@ -223,6 +224,12 @@ async function getEndEpoch(date) {
       },
     })
     .then(({ data }) => data.ledger_state.epoch);
+
+  if (
+    new Date(new Date().toISOString().split('T')[0]).getTime() ===
+    new Date(date).getTime()
+  )
+    return endEpoch;
 
   while (startEpoch <= endEpoch) {
     const midEpoch = Math.floor((startEpoch + endEpoch) / 2);
