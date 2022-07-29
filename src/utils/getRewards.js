@@ -258,11 +258,19 @@ async function start(address, startDate, endDate) {
   );
   const parser = new Parser(fields);
   const csv = parser.parse(data);
-  const containerName = 'reward-reports';
-  const containerClient = blobServiceClient.getContainerClient(containerName);
-  const blobName = `${address}-` + new Date().getTime() + '.csv';
-  const blockBlobClient = containerClient.getBlockBlobClient(blobName);
-  await blockBlobClient.upload(csv, csv.length);
+  const blobName = `${address}_${new Date(startDate).getTime()}_${new Date(
+    endDate
+  ).getTime()}.csv`;
+  if (await blobServiceClient.getContainerClient(address).exists()) {
+    const containerClient = blobServiceClient.getContainerClient(address);
+    const blockBlobClient = containerClient.getBlockBlobClient(blobName);
+    await blockBlobClient.upload(csv, csv.length);
+  } else {
+    const { containerClient, containerCreateResponse } =
+      await blobServiceClient.createContainer(address);
+    const blockblobClient = containerClient.getBlockBlobClient(blobName);
+    await blockblobClient.upload(csv, csv.length);
+  }
 }
 
 module.exports = start;
