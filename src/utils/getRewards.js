@@ -267,14 +267,21 @@ async function start(address, startDate, endDate) {
   const containerName = await db.collection('containers').findOne({ address });
 
   if (containerName) {
-    const containerClient = blobServiceClient.getContainerClient(containerName);
+    const containerClient = blobServiceClient.getContainerClient(
+      containerName.containerName
+    );
     const blockBlobClient = containerClient.getBlockBlobClient(blobName);
     await blockBlobClient.upload(csv, csv.length);
   } else {
     const newContainerName = v4();
+
     const { containerClient } = await blobServiceClient.createContainer(
       newContainerName
     );
+
+    await db
+      .collection('containers')
+      .insertOne({ address, containerName: newContainerName });
     const blockblobClient = containerClient.getBlockBlobClient(blobName);
     await blockblobClient.upload(csv, csv.length);
   }
