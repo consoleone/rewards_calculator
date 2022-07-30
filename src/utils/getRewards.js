@@ -3,6 +3,7 @@ const axios = require('axios');
 const { getDb, client } = require('../db/mongo');
 const { Parser } = require('json2csv');
 const { BlobServiceClient } = require('@azure/storage-blob');
+const { v4 } = require('uuid');
 
 const blobServiceClient = BlobServiceClient.fromConnectionString(
   process.env.BLOB_URI
@@ -261,13 +262,19 @@ async function start(address, startDate, endDate) {
   const blobName = `${address}_${new Date(startDate).getTime()}_${new Date(
     endDate
   ).getTime()}.csv`;
-  if (await blobServiceClient.getContainerClient(address).exists()) {
-    const containerClient = blobServiceClient.getContainerClient(address);
+
+  const db = await getDb();
+  const containerName = await db.collection('containers').findOne({ address });
+
+  if (containerName) {
+    const containerClient = blobServiceClient.getContainerClient(containerName);
     const blockBlobClient = containerClient.getBlockBlobClient(blobName);
     await blockBlobClient.upload(csv, csv.length);
   } else {
-    const { containerClient, containerCreateResponse } =
-      await blobServiceClient.createContainer(address);
+    const newContainerName = v4();
+    const { containerClient } = await blobServiceClient.createContainer(
+      newContainerName
+    );
     const blockblobClient = containerClient.getBlockBlobClient(blobName);
     await blockblobClient.upload(csv, csv.length);
   }
