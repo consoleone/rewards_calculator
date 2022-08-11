@@ -257,8 +257,31 @@ async function start(address, startDate, endDate) {
     await getStartEpoch(startDate),
     await getEndEpoch(endDate)
   );
+
   const parser = new Parser(fields);
-  const csv = parser.parse(data);
+  let csv;
+  if (data.length > 0) {
+    csv = parser.parse(data);
+  } else {
+    csv = parser.parse([
+      {
+        rewardDate: '',
+        validator: '',
+        tokenIdentifier: '',
+        epoch: '',
+        time: '',
+        amount: '',
+        usd: '',
+        gbp: '',
+        eur: '',
+        jpy: '',
+        cny: '',
+        inr: '',
+        aud: '',
+        krw: '',
+      },
+    ]);
+  }
   const blobName = `${address}_${new Date(startDate).getTime()}_${new Date(
     endDate
   ).getTime()}.csv`;
