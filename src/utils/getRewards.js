@@ -117,7 +117,15 @@ async function calculateRewards(address, start, end) {
       .split('T')[0];
     const prices = await pricesCollection
       .findOne({ symbol: 'xrd', date: rewardDate })
-      .then((value) => value.prices);
+      .then((value) => {
+        if (value) {
+          return value.prices;
+        }
+      });
+
+    if (!prices) {
+      continue;
+    }
 
     for (const stake of startStake.stakes) {
       let reward = 0;
@@ -179,6 +187,7 @@ async function calculateRewards(address, start, end) {
       }
     }
   }
+
   return [rewards, data];
 }
 
@@ -266,7 +275,7 @@ async function start(address, startDate, endDate) {
 
   const parser = new Parser(fields);
   let csv;
-  if (data.length > 0) {
+  if (data && data.length > 0) {
     csv = parser.parse(data);
   } else {
     csv = parser.parse([
