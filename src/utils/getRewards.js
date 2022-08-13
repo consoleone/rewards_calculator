@@ -45,7 +45,7 @@ const fields = [
 
 async function getStakes(address, epoch) {
   const result = await axios.post(
-    'https://gateway.caviarnine.com/account/stakes',
+    'https://gatewayus.radixportfolio.info/account/stakes',
     {
       network_identifier: {
         network: 'mainnet',
@@ -92,7 +92,9 @@ async function transactions(address) {
 async function calculateRewards(address, start, end) {
   let rewards = 0;
   let currentEpoch = start;
-  const stakeTransactions = await transactions(address);
+  const stakeTransactions = await transactions(address).catch((error) =>
+    console.error(error, 'error at transaction api')
+  );
   const data = [];
   let startStake;
   let endStake;
@@ -101,11 +103,15 @@ async function calculateRewards(address, start, end) {
 
   while (currentEpoch <= end) {
     if (!startStake) {
-      startStake = await getStakes(address, currentEpoch);
+      startStake = await getStakes(address, currentEpoch).catch((error) =>
+        console.error(error, 'error at stakes api')
+      );
     } else {
       startStake = endStake;
     }
-    endStake = await getStakes(address, ++currentEpoch);
+    endStake = await getStakes(address, ++currentEpoch).catch((error) =>
+      console.error(error, 'error at stakes api')
+    );
     const rewardDate = new Date(startStake.ledger_state.timestamp)
       .toISOString()
       .split('T')[0];
