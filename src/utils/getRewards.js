@@ -124,6 +124,7 @@ async function calculateRewards(address, start, end) {
       });
 
     if (!prices) {
+      console.log(rewardDate);
       continue;
     }
 
