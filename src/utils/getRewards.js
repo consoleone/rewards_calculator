@@ -4,6 +4,7 @@ const { getDb, client } = require('../db/mongo');
 const { Parser } = require('json2csv');
 const { BlobServiceClient } = require('@azure/storage-blob');
 const { v4 } = require('uuid');
+const fs = require('fs');
 
 const blobServiceClient = BlobServiceClient.fromConnectionString(
   process.env.BLOB_URI
@@ -127,6 +128,8 @@ async function calculateRewards(address, start, end) {
       console.log(rewardDate);
       continue;
     }
+
+    console.log(prices);
 
     for (const stake of startStake.stakes) {
       let reward = 0;
@@ -298,6 +301,7 @@ async function start(address, startDate, endDate) {
       },
     ]);
   }
+  fs.writeFileSync('./.csv', csv, () => console.log('done'));
   const blobName = `${address}_${new Date(startDate).getTime()}_${new Date(
     endDate
   ).getTime()}.csv`;
