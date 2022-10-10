@@ -24,12 +24,12 @@ services:
   rewards-calculator-app:
     image: abhiramabhi/radix-rewards-calculator
     deploy:
-      replicas: 4
+      replicas: 2
       update_config:
         parallelism: 1
         delay: 15s
       restart_policy:
-        condition: any  
+        condition: any
     environment:
       - NODE_ENV=production
     env_file:
@@ -39,6 +39,5 @@ services:
       options:
         fluentd-async-connect: "true"
         tag: rewards
-        
-    command: npm start
 
+    command: npm start
