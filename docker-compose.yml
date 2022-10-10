@@ -1,0 +1,44 @@
+version: "3"
+services:
+  fluentd:
+    image: fluent/fluentd
+    volumes:
+      - ./fluentd/:/fluentd/etc:ro
+      - ./logs/:/output/
+    ports:
+      - "24224:24224"
+      - "24224:24224/udp"
+
+  nginx:
+    image: nginx:stable-alpine
+    ports:
+      - "3000:80"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    logging:
+      driver: "fluentd"
+      options:
+        fluentd-async-connect: "true"
+        tag: nginx
+
+  rewards-calculator-app:
+    image: abhiramabhi/radix-rewards-calculator
+    deploy:
+      replicas: 4
+      update_config:
+        parallelism: 1
+        delay: 15s
+      restart_policy:
+        condition: any  
+    environment:
+      - NODE_ENV=production
+    env_file:
+      - ./.env
+    logging:
+      driver: "fluentd"
+      options:
+        fluentd-async-connect: "true"
+        tag: rewards
+        
+    command: npm start
+
