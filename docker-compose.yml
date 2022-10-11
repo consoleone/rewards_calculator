@@ -34,7 +34,7 @@ services:
     command: npm start
 
   fluentd:
-    image: fluent/fluentd:v0.12-debian
+    image: abhiramabhi/fluentd
     volumes:
       - ./fluentd/:/fluentd/etc:ro
       - ./logs/:/fluentd/log/
