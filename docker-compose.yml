@@ -21,6 +21,8 @@ services:
         fluentd-address: localhost:24224
         fluentd-async-connect: "true"
         tag: nginx
+    depends_on:
+      - fluentd
 
   rewards-calculator-app:
     image: abhiramabhi/radix-rewards-calculator
@@ -41,5 +43,7 @@ services:
         fluentd-address: localhost:24224
         fluentd-async-connect: "true"
         tag: rewards
+    depends_on:
+      - fluentd
 
     command: npm start
