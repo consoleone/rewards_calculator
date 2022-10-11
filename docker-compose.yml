@@ -4,7 +4,7 @@ services:
     image: fluent/fluentd
     volumes:
       - ./fluentd/:/fluentd/etc:ro
-      - ./logs/:/output/
+      - ./logs/:/var/log/fluent/
     ports:
       - "24224:24224"
       - "24224:24224/udp"
