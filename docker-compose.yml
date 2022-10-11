@@ -1,13 +1,5 @@
 version: "3"
 services:
-  fluentd:
-    image: abhiramabhi/fluentd
-    volumes:
-      - ./fluentd/:/fluentd/etc:ro
-      - ./logs/:/var/log/fluent/
-    ports:
-      - "24224:24224"
-      - "24224:24224/udp"
 
   nginx:
     image: nginx:stable-alpine
@@ -18,11 +10,8 @@ services:
     logging:
       driver: "fluentd"
       options:
-        fluentd-address: localhost:24224
         fluentd-async-connect: "true"
         tag: nginx
-    depends_on:
-      - fluentd
 
   rewards-calculator-app:
     image: abhiramabhi/radix-rewards-calculator
@@ -40,10 +29,15 @@ services:
     logging:
       driver: "fluentd"
       options:
-        fluentd-address: localhost:24224
         fluentd-async-connect: "true"
         tag: rewards
-    depends_on:
-      - fluentd
-
     command: npm start
+
+  fluentd:
+    image: fluent/fluentd:v0.12-debian
+    volumes:
+      - ./fluentd/:/fluentd/etc:ro
+      - ./logs/:/fluentd/log/
+    ports:
+      - "24224:24224"
+      - "24224:24224/udp"
