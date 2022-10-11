@@ -1,0 +1,3 @@
+FROM fluent/fluentd:v0.12-debian
+RUN mkdir output
+RUN chown fluent:fluent /output
