@@ -37,7 +37,7 @@ services:
     image: abhiramabhi/fluentd
     volumes:
       - ./fluentd/:/fluentd/etc:ro
-      - ./logs/:/fluentd/log/
+      - ./logs/:/output/
     ports:
       - "24224:24224"
       - "24224:24224/udp"
