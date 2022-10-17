@@ -24,12 +24,10 @@ services:
   rewards-calculator-app:
     image: abhiramabhi/radix-rewards-calculator
     deploy:
-      replicas: 4
+      replicas: 1
       update_config:
         parallelism: 1
         delay: 15s
-      restart_policy:
-        condition: any  
     environment:
       - NODE_ENV=production
     env_file:
