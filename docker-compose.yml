@@ -15,6 +15,10 @@ services:
 
   nginx:
     image: nginx:stable-alpine
+    expose:
+      - 3080
+    ports:
+      - "3000:3080"
     volumes:
       - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
       - ./nginxlogs/:/var/log/nginx/
