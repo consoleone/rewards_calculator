@@ -15,8 +15,6 @@ services:
 
   nginx:
     image: nginx:stable-alpine
-    expose:
-      - 3080
     ports:
       - "3000:3080"
     volumes:
