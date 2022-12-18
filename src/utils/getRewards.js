@@ -178,6 +178,7 @@ async function calculateRewards(address, start, end) {
           epoch: startStake.ledger_state.epoch,
           time: startStake.ledger_state.timestamp,
           amount: stake.delegated_stake.value,
+          reward: reward,
           usd: (reward * prices.usd).toFixed(10),
           gbp: (reward * prices.gbp).toFixed(10),
           eur: (reward * prices.eur).toFixed(10),
