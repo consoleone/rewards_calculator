@@ -8,11 +8,15 @@ services:
       update_config:
         parallelism: 1
         delay: 15s
+    command: >
+      sh -c "npm start &> /app/output/stdout.log"
+    volumes:
+      - ./logs:/app/output
+
     environment:
       - NODE_ENV=production
     env_file:
       - ./.env
-    command: npm start
 
   nginx:
     image: nginx:stable-alpine
