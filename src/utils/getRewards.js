@@ -12,7 +12,7 @@ const blobServiceClient = BlobServiceClient.fromConnectionString(
 
 const queryDate = (epoch) => {
   return axios
-    .post('https://gateway.caviarnine.com/validator', {
+    .post('https://gatewayde.dev.radixportfolio.info/validator', {
       network_identifier: {
         network: 'mainnet',
       },
@@ -69,7 +69,7 @@ async function transactions(address) {
   const stakeTransaction = [];
   do {
     const result = await axios.post(
-      'https://gateway.caviarnine.com/account/transactions',
+      'https://gatewayde.dev.radixportfolio.info/account/transactions',
       {
         network_identifier: {
           network: 'mainnet',
@@ -201,7 +201,7 @@ async function getStartEpoch(date) {
   if (new Date(date).getTime() <= new Date('2021-08-11').getTime()) return 3;
   let startEpoch = 1;
   let endEpoch = await axios
-    .post('https://gateway.caviarnine.com/validator', {
+    .post('https://gatewayde.dev.radixportfolio.info/validator', {
       network_identifier: {
         network: 'mainnet',
       },
@@ -236,7 +236,7 @@ async function getEndEpoch(date) {
 
   let startEpoch = 1;
   let endEpoch = await axios
-    .post('https://gateway.caviarnine.com/validator', {
+    .post('https://gatewayde.dev.radixportfolio.info/validator', {
       network_identifier: {
         network: 'mainnet',
       },
