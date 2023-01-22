@@ -1,53 +1,29 @@
 version: "3"
 services:
-
-  rewards-calculator-app:
+  app:
+    build: .
     image: abhiramabhi/radix-rewards-calculator
     ports:
       - "3000:3000"
     deploy:
-      replicas: 1
+      replicas: 2
       update_config:
         parallelism: 1
         delay: 15s
-      #restart_policy:
-       # condition: any
+    command: >
+      sh -c "npm start &> /app/output/stdout.log"
+    volumes:
+      - ./logs:/app/output
+
     environment:
       - NODE_ENV=production
     env_file:
       - ./.env
-    logging:
-      driver: "fluentd"
-      options:
-        fluentd-async-connect: "true"
-        tag: rewards
-    command: npm start
 
-  fluentd:
-    user: root
-    image: abhiramabhi/fluentd
+  nginx:
+    image: nginx:stable-alpine
+    ports:
+      - "3000:3080"
     volumes:
-      - ./fluentd/:/fluentd/etc:ro
-    ports:
-      - "24224:24224"
-      - "24224:24224/udp"
-      
-  elasticsearch: # port 9200
-    image: elasticsearch:8.4.3
-    environment:
-    - node.name=elasticsearch
-    - cluster.initial_master_nodes=elasticsearch
-    - bootstrap.memory_lock=true
-    - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
-    ulimits:
-      memlock:
-        soft: -1
-        hard: -1
-
-  kibana:
-    image: kibana:7.9.1
-    ports:
-      - "5601:5601"
-    environment:
-      ELASTICSEARCH_URL: http://elasticsearch:9300
-      ELASTICSEARCH_HOSTS: http://elasticsearch:9300
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./nginxlogs/:/var/log/nginx/

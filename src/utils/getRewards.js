@@ -12,7 +12,7 @@ const blobServiceClient = BlobServiceClient.fromConnectionString(
 
 const queryDate = (epoch) => {
   return axios
-    .post('https://gateway.caviarnine.com/validator', {
+    .post('https://gatewayde.dev.radixportfolio.info/validator', {
       network_identifier: {
         network: 'mainnet',
       },
@@ -34,6 +34,7 @@ const fields = [
   'epoch',
   'time',
   'amount',
+  'reward',
   'usd',
   'gbp',
   'eur',
@@ -68,7 +69,7 @@ async function transactions(address) {
   const stakeTransaction = [];
   do {
     const result = await axios.post(
-      'https://gateway.caviarnine.com/account/transactions',
+      'https://gatewayde.dev.radixportfolio.info/account/transactions',
       {
         network_identifier: {
           network: 'mainnet',
@@ -178,6 +179,7 @@ async function calculateRewards(address, start, end) {
           epoch: startStake.ledger_state.epoch,
           time: startStake.ledger_state.timestamp,
           amount: stake.delegated_stake.value,
+          reward: reward,
           usd: (reward * prices.usd).toFixed(10),
           gbp: (reward * prices.gbp).toFixed(10),
           eur: (reward * prices.eur).toFixed(10),
@@ -199,7 +201,7 @@ async function getStartEpoch(date) {
   if (new Date(date).getTime() <= new Date('2021-08-11').getTime()) return 3;
   let startEpoch = 1;
   let endEpoch = await axios
-    .post('https://gateway.caviarnine.com/validator', {
+    .post('https://gatewayde.dev.radixportfolio.info/validator', {
       network_identifier: {
         network: 'mainnet',
       },
@@ -234,7 +236,7 @@ async function getEndEpoch(date) {
 
   let startEpoch = 1;
   let endEpoch = await axios
-    .post('https://gateway.caviarnine.com/validator', {
+    .post('https://gatewayde.dev.radixportfolio.info/validator', {
       network_identifier: {
         network: 'mainnet',
       },
@@ -290,6 +292,7 @@ async function start(address, startDate, endDate) {
         epoch: '',
         time: '',
         amount: '',
+        reward: '',
         usd: '',
         gbp: '',
         eur: '',
