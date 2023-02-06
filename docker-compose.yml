@@ -2,28 +2,38 @@ version: "3"
 services:
   app:
     build: .
-    image: consoleone/rewards_calculator
-    ports:
-      - "3000:3000"
+    image: rewards-calculator:latest
     deploy:
       replicas: 2
       update_config:
         parallelism: 1
         delay: 15s
-    command: >
-      sh -c "npm start &> /app/output/stdout.log"
-    volumes:
-      - ./logs:/app/output
-
+    command: npm start
     environment:
       - NODE_ENV=production
     env_file:
       - ./.env
+    depends_on:
+      - fluentbit
+    logging:
+      driver: "fluentd"
+      options:
+        tag: "app.stdout"
 
   nginx:
     image: nginx:stable-alpine
+    depends_on:
+      - app
     ports:
       - "3000:3080"
     volumes:
       - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
       - ./nginxlogs/:/var/log/nginx/
+
+  fluentbit:
+    image: fluent/fluent-bit:1.4.4
+    volumes:
+      - ./fluent-bit/fluent-bit.conf:/fluent-bit/etc/fluent-bit.conf
+      - ./logs:/logs
+    ports:
+      - "24224:24224"
