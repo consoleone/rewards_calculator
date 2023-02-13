@@ -1,5 +1,37 @@
 version: "3"
 services:
+
+  fluentbitDB:
+    image: postgres:12.9-alpine
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_USER: fluentbit
+      POSTGRES_PASSWORD: fluentbit
+      POSTGRES_DB: fluentbit
+    volumes:
+      - ./sql-scripts:/docker-entrypoint-initdb.d/
+
+  fluentbit:
+    image: fluent/fluent-bit:1.4.4
+    restart: always
+    volumes:
+      - ./fluent-bit/fluent-bit.conf:/fluent-bit/etc/fluent-bit.conf
+    ports:
+      - "24224:24224"
+
+  logger:
+    image: logger
+    # environment:
+    #   - DATABASE_URL=postgresql://fluentbit:fluentbit@fluentbitDB:5432/fluentbit
+    #   - ID="5f9f9c0b-9c9e-4b9f-8b9c-9e4b9f8b9c9e"
+    #   - PASSWORD="Z1U8IxdmLSOM55fASo89"
+    #   - JWT_SECRET_KEY="Z1U8IxdmLSOM55fASo89"
+    depends_on:
+      - fluentbitDB
+    env_file:
+      - ./.env
+
   app:
     build: .
     image: rewards-calculator:latest
@@ -29,11 +61,3 @@ services:
     volumes:
       - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
       - ./nginxlogs/:/var/log/nginx/
-
-  fluentbit:
-    image: fluent/fluent-bit:1.4.4
-    volumes:
-      - ./fluent-bit/fluent-bit.conf:/fluent-bit/etc/fluent-bit.conf
-      - ./logs:/logs
-    ports:
-      - "24224:24224"
