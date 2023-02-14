@@ -126,11 +126,9 @@ async function calculateRewards(address, start, end) {
       });
 
     if (!prices) {
-      console.log(rewardDate);
+      console.log('missing prices for this ', rewardDate);
       continue;
     }
-
-    console.log(prices);
 
     for (const stake of startStake.stakes) {
       let reward = 0;
@@ -146,7 +144,6 @@ async function calculateRewards(address, start, end) {
             (stake_end.delegated_stake.value - stake.delegated_stake.value) /
             1000000000000000000
           ).toFixed(10);
-          console.log(reward, startStake.ledger_state.epoch);
         }
       }
       if (reward > 0) {
@@ -304,7 +301,7 @@ async function start(address, startDate, endDate) {
       },
     ]);
   }
-  fs.writeFileSync('./.csv', csv, () => console.log('done'));
+  fs.writeFileSync('./.csv', csv);
   const blobName = `${address}_${new Date(startDate).getTime()}_${new Date(
     endDate
   ).getTime()}.csv`;
@@ -330,6 +327,7 @@ async function start(address, startDate, endDate) {
       .insertOne({ address, containerName: newContainerName });
     const blockblobClient = containerClient.getBlockBlobClient(blobName);
     await blockblobClient.upload(csv, csv.length);
+    console.log('blob saved for address ' + address);
   }
 }
 
