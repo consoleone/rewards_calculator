@@ -126,7 +126,6 @@ async function calculateRewards(address, start, end) {
       });
 
     if (!prices) {
-      console.log('missing prices for this ', rewardDate);
       continue;
     }
 
