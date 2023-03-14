@@ -226,7 +226,6 @@ async function getStartEpoch(date) {
   let endEpoch = await getLatestEpoch();
 
   while (startEpoch <= endEpoch) {
-    console.log(startEpoch, endEpoch);
     const midEpoch = Math.floor((startEpoch + endEpoch) / 2);
     const midDate = await queryDate(midEpoch);
 
