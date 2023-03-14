@@ -4,27 +4,33 @@ const { getDb, client } = require('../db/mongo');
 const { Parser } = require('json2csv');
 const { BlobServiceClient } = require('@azure/storage-blob');
 const { v4 } = require('uuid');
-const fs = require('fs');
 
 const blobServiceClient = BlobServiceClient.fromConnectionString(
   process.env.BLOB_URI
 );
 
-const queryDate = (epoch) => {
-  return axios
-    .post('https://gatewayde.dev.radixportfolio.info/validator', {
-      network_identifier: {
-        network: 'mainnet',
-      },
-      validator_identifier: {
-        address:
-          'rv1qvjz86qwa7l80y8vhfuhz6957ch6texdmpk98rg2gtakhr0avan4jplkxy7',
-      },
-      at_state_identifier: {
-        epoch,
-      },
-    })
-    .then(({ data }) => data.ledger_state.timestamp.split('T')[0]);
+const queryDate = async (epoch) => {
+  try {
+    return axios
+      .post('https://gatewayde.dev.radixportfolio.info/validator', {
+        network_identifier: {
+          network: 'mainnet',
+        },
+        validator_identifier: {
+          address:
+            'rv1qvjz86qwa7l80y8vhfuhz6957ch6texdmpk98rg2gtakhr0avan4jplkxy7',
+        },
+        at_state_identifier: {
+          epoch,
+        },
+      })
+      .then(({ data }) => data.ledger_state.timestamp.split('T')[0]);
+  } catch (error) {
+    console.log('error in queryDate retrying in 1s');
+    return new Promise((resolve) => setTimeout(resolve, 1000)).then(() =>
+      queryDate(epoch)
+    );
+  }
 };
 
 const fields = [
@@ -193,22 +199,34 @@ async function calculateRewards(address, start, end) {
   return [rewards, data];
 }
 
+const getLatestEpoch = async () => {
+  try {
+    return axios
+      .post('https://gatewayde.dev.radixportfolio.info/validator', {
+        network_identifier: {
+          network: 'mainnet',
+        },
+        validator_identifier: {
+          address:
+            'rv1qvjz86qwa7l80y8vhfuhz6957ch6texdmpk98rg2gtakhr0avan4jplkxy7',
+        },
+      })
+      .then(({ data }) => data.ledger_state.epoch);
+  } catch (error) {
+    console.log('error in getLatestEpoch retrying in 1s');
+    return new Promise((resolve) => setTimeout(resolve, 1000)).then(() =>
+      endEpoch()
+    );
+  }
+};
+
 async function getStartEpoch(date) {
   if (new Date(date).getTime() <= new Date('2021-08-11').getTime()) return 3;
   let startEpoch = 1;
-  let endEpoch = await axios
-    .post('https://gatewayde.dev.radixportfolio.info/validator', {
-      network_identifier: {
-        network: 'mainnet',
-      },
-      validator_identifier: {
-        address:
-          'rv1qvjz86qwa7l80y8vhfuhz6957ch6texdmpk98rg2gtakhr0avan4jplkxy7',
-      },
-    })
-    .then(({ data }) => data.ledger_state.epoch);
+  let endEpoch = await getLatestEpoch();
 
   while (startEpoch <= endEpoch) {
+    console.log(startEpoch, endEpoch);
     const midEpoch = Math.floor((startEpoch + endEpoch) / 2);
     const midDate = await queryDate(midEpoch);
 
@@ -231,17 +249,7 @@ async function getEndEpoch(date) {
   if (new Date(date).getTime() < new Date('2021-08-11').getTime()) return 3;
 
   let startEpoch = 1;
-  let endEpoch = await axios
-    .post('https://gatewayde.dev.radixportfolio.info/validator', {
-      network_identifier: {
-        network: 'mainnet',
-      },
-      validator_identifier: {
-        address:
-          'rv1qvjz86qwa7l80y8vhfuhz6957ch6texdmpk98rg2gtakhr0avan4jplkxy7',
-      },
-    })
-    .then(({ data }) => data.ledger_state.epoch);
+  let endEpoch = await getLatestEpoch();
 
   if (
     new Date(new Date().toISOString().split('T')[0]).getTime() ===
@@ -300,7 +308,7 @@ async function start(address, startDate, endDate) {
       },
     ]);
   }
-  fs.writeFileSync('./.csv', csv);
+
   const blobName = `${address}_${new Date(startDate).getTime()}_${new Date(
     endDate
   ).getTime()}.csv`;
@@ -326,8 +334,9 @@ async function start(address, startDate, endDate) {
       .insertOne({ address, containerName: newContainerName });
     const blockblobClient = containerClient.getBlockBlobClient(blobName);
     await blockblobClient.upload(csv, csv.length);
-    console.log('blob saved for address ' + address);
   }
+  console.log('blob saved for address ' + address);
+  console.log('Search ended for address ' + address);
 }
 
 module.exports = start;

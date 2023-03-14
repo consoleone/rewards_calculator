@@ -35,9 +35,7 @@ app.post('/api/get-rewards', async (req, res) => {
       today.setDate(today.getDate() - 1);
       endDateNew = today.toISOString().split('T')[0];
     }
-    calculateRewards(address, startDateNew, endDateNew).then((result) => {
-      console.log('search end for address ' + address);
-    });
+    calculateRewards(address, startDateNew, endDateNew);
     res
       .status(200)
       .json({ success: true, message: 'Rewards will avaliable after 30min ' });
