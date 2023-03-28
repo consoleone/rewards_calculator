@@ -1,5 +1,5 @@
 if (process.env.NODE_ENV === 'development') require('dotenv').config();
-const axios = require('axios');
+const api = require('../api');
 const { getDb, client } = require('../db/mongo');
 const { Parser } = require('json2csv');
 const { BlobServiceClient } = require('@azure/storage-blob');
@@ -11,8 +11,8 @@ const blobServiceClient = BlobServiceClient.fromConnectionString(
 
 const queryDate = async (epoch) => {
   try {
-    return axios
-      .post('https://gatewayde.dev.radixportfolio.info/validator', {
+    return api
+      .post('/validator', {
         network_identifier: {
           network: 'mainnet',
         },
@@ -39,7 +39,7 @@ const fields = [
   'tokenIdentifier',
   'epoch',
   'time',
-  'amount',
+  'totalStaket',
   'reward',
   'usd',
   'gbp',
@@ -52,20 +52,17 @@ const fields = [
 ];
 
 async function getStakes(address, epoch) {
-  const result = await axios.post(
-    'https://gatewayus.radixportfolio.info/account/stakes',
-    {
-      network_identifier: {
-        network: 'mainnet',
-      },
-      account_identifier: {
-        address,
-      },
-      at_state_identifier: {
-        epoch,
-      },
-    }
-  );
+  const result = await api.post('/account/stakes', {
+    network_identifier: {
+      network: 'mainnet',
+    },
+    account_identifier: {
+      address,
+    },
+    at_state_identifier: {
+      epoch,
+    },
+  });
   return result.data;
 }
 
@@ -74,18 +71,15 @@ async function transactions(address) {
 
   const stakeTransaction = [];
   do {
-    const result = await axios.post(
-      'https://gatewayde.dev.radixportfolio.info/account/transactions',
-      {
-        network_identifier: {
-          network: 'mainnet',
-        },
-        account_identifier: {
-          address,
-        },
-        cursor: nextCursor,
-      }
-    );
+    const result = await api.post('/account/transactions', {
+      network_identifier: {
+        network: 'mainnet',
+      },
+      account_identifier: {
+        address,
+      },
+      cursor: nextCursor,
+    });
 
     nextCursor = result.data.next_cursor;
     for (const transaction of result.data.transactions) {
@@ -180,7 +174,7 @@ async function calculateRewards(address, start, end) {
           tokenIdentifier: stake.delegated_stake.token_identifier.rri,
           epoch: startStake.ledger_state.epoch,
           time: startStake.ledger_state.timestamp,
-          amount: stake.delegated_stake.value,
+          totalStake: stake.delegated_stake.value,
           reward: reward,
           usd: (reward * prices.usd).toFixed(10),
           gbp: (reward * prices.gbp).toFixed(10),
@@ -201,8 +195,8 @@ async function calculateRewards(address, start, end) {
 
 const getLatestEpoch = async () => {
   try {
-    return axios
-      .post('https://gatewayde.dev.radixportfolio.info/validator', {
+    return api
+      .post('/validator', {
         network_identifier: {
           network: 'mainnet',
         },
@@ -215,7 +209,7 @@ const getLatestEpoch = async () => {
   } catch (error) {
     console.log('error in getLatestEpoch retrying in 1s');
     return new Promise((resolve) => setTimeout(resolve, 1000)).then(() =>
-      endEpoch()
+      getLatestEpoch()
     );
   }
 };
@@ -294,7 +288,7 @@ async function start(address, startDate, endDate) {
         tokenIdentifier: '',
         epoch: '',
         time: '',
-        amount: '',
+        totalStake: '',
         reward: '',
         usd: '',
         gbp: '',

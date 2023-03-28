@@ -2,6 +2,7 @@ if (process.env.NODE_ENV === 'development') require('dotenv').config();
 const express = require('express');
 const calculateRewards = require('./utils/getRewards');
 const cors = require('cors');
+const dayjs = require('dayjs');
 
 const app = express();
 
@@ -16,8 +17,9 @@ app.use(express.json());
 app.post('/api/get-rewards', async (req, res) => {
   try {
     const { address, startDate, endDate } = req.body;
-    let startDateNew = startDate.split('T')[0];
-    let endDateNew = endDate.split('T')[0];
+    console.log(startDate, endDate);
+    let startDateNew = dayjs(startDate).format('YYYY-MM-DD');
+    let endDateNew = dayjs(endDate).format('YYYY-MM-DD');
     console.log(
       'search start for address ',
       address,
