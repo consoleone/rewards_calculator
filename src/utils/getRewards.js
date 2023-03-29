@@ -174,7 +174,9 @@ async function calculateRewards(address, start, end) {
           tokenIdentifier: stake.delegated_stake.token_identifier.rri,
           epoch: startStake.ledger_state.epoch,
           time: startStake.ledger_state.timestamp,
-          totalStake: stake.delegated_stake.value,
+          totalStake: (
+            stake.delegated_stake.value / 1000000000000000000
+          ).toFixed(10),
           reward: reward,
           usd: (reward * prices.usd).toFixed(10),
           gbp: (reward * prices.gbp).toFixed(10),
