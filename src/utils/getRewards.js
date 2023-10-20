@@ -272,7 +272,6 @@ async function getEndEpoch(date) {
 }
 
 async function start(address, startDate, endDate) {
-  if (!address) throw new Error('address is required');
   const [rewards, data] = await calculateRewards(
     address,
     await getStartEpoch(startDate),
