@@ -27,7 +27,7 @@ app.post('/api/get-rewards', async (req, res) => {
     let startDateNew = dayjs(startDate).format('YYYY-MM-DD');
     let endDateNew = dayjs(endDate).format('YYYY-MM-DD');
 
-    if (new Date(startDateNew) > new Date('')) {
+    if (new Date(startDateNew).getTime() > new Date('2023-09-28')) {
       return res.status(400).json({
         success: false,
         message: 'Start Date should not be greater than 2023-09-28',
