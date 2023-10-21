@@ -19,12 +19,10 @@ app.post('/api/get-rewards', async (req, res) => {
     const { address, startDate, endDate } = req.body;
 
     if (!address || !startDate || !endDate)
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: 'address, startDate and endDate are required',
-        });
+      return res.status(400).json({
+        success: false,
+        message: 'address, startDate and endDate are required',
+      });
 
     console.log(startDate, endDate);
     let startDateNew = dayjs(startDate).format('YYYY-MM-DD');

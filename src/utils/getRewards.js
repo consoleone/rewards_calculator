@@ -78,6 +78,9 @@ async function transactions(address) {
       account_identifier: {
         address,
       },
+      at_state_identifier: {
+        epoch: 32718,
+      },
       cursor: nextCursor,
     });
 
@@ -196,6 +199,7 @@ async function calculateRewards(address, start, end) {
 }
 
 const getLatestEpoch = async () => {
+  return 32718;
   try {
     return api
       .post('/validator', {
@@ -242,6 +246,7 @@ async function getStartEpoch(date) {
 
 async function getEndEpoch(date) {
   if (new Date(date).getTime() < new Date('2021-08-11').getTime()) return 3;
+  if (new Date(date) >= new Date('2023-09-28')) return 32718;
 
   let startEpoch = 1;
   let endEpoch = await getLatestEpoch();
