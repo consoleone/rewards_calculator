@@ -12,7 +12,6 @@ services:
 
   app:
     build: .
-    image: rewards-calculator:latest
     deploy:
       replicas: 2
       update_config:
